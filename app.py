@@ -1,22 +1,35 @@
 import streamlit as st
-import pickle
 import pandas as pd
+import pickle
+import os
+import gdown
 
-# Load model.pkl which contains the dataframe and similarity matrix
-model_data = pickle.load(open('model.pkl', 'rb'))
+# --- Step 1: Load model.pkl from Google Drive if not present ---
+# Replace this with your actual Google Drive file ID
+file_id = "1cUdo0dRgTij--AGk4SFTH9YBhYaZWAsW"  # 🔁 Replace with actual ID
+url = f"https://drive.google.com/uc?id={file_id}"
+model_path = "model.pkl"
+
+if not os.path.exists(model_path):
+    st.info("Downloading model file...")
+    gdown.download(url, model_path, quiet=False)
+
+# --- Step 2: Load the model and data ---
+with open(model_path, 'rb') as f:
+    model_data = pickle.load(f)
+
 new_df = model_data['data']
 similarity = model_data['similarity']
 
-# ✅ Fallback poster image (online URL)
+# --- Step 3: Fallback poster ---
 FALLBACK_POSTER = "https://png.pngtree.com/thumb_back/fh260/back_our/20190622/ourmid/pngtree-minimalist-film-festival-film-and-tv-movie-poster-image_220289.jpg"
 
-# Get safe poster URL or fallback
 def get_poster_url(poster):
     if isinstance(poster, str) and poster.startswith("http") and len(poster.strip()) > 0:
         return poster
     return FALLBACK_POSTER
 
-# Recommendation function
+# --- Step 4: Recommendation logic ---
 def recommend(movie):
     movie_index = new_df[new_df['movie_name'] == movie].index[0]
     distances = list(enumerate(similarity[movie_index]))
@@ -36,7 +49,7 @@ def recommend(movie):
 
     return recommended_movies, posters, years, ratings
 
-# ---------- Streamlit UI ----------
+# --- Step 5: Streamlit UI ---
 st.set_page_config(layout="wide")
 st.title("🎬 Movie Recommender System")
 
